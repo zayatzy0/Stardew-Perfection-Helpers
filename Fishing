@@ -1,14 +1,15 @@
-# Stardew Valley Fishing Progress Tracker
+# Stardew Valley Fish Collections Tracker
 
-A SQLite database tool to track your fishing completion progress in Stardew Valley. Perfect for completionists who want to know exactly which fish they still need to catch!
+A SQLite database tool to track your **Fish Collections** completion progress in Stardew Valley. Covers everything shown in the Collections tab under Fish - perfect for 100% completion!
 
 ## Features
 
-- ✅ **Complete fish database** - All 57+ catchable fish and crab pot items
+- ✅ **Complete Collections database** - All 66 fish items from the Collections screen
 - 🎯 **Progress tracking** - See your completion percentage at a glance
 - 🔄 **Auto-updating** - `caught` status automatically updates when you log catches
 - ⚡ **Fast data entry** - Interactive command-line tool for quick updates
 - 📊 **Useful queries** - Find missing fish by season, location, etc.
+- 🐟 **Full coverage** - Fish, crab pot items, algae, jellies - everything for Collections completion
 
 ## Quick Start
 
@@ -48,7 +49,7 @@ CREATE TABLE fish (
     max_catch INTEGER
 );
 
--- Insert all fish data (regular fish + crab pot items)
+-- Insert all fish data (complete Collections screen coverage)
 INSERT INTO fish (name, season, weather, location, mine_level, num_caught, caught) VALUES
 -- Ocean Fish
 ('Anchovy', 'Spring/Fall', 'Any', 'Ocean', 0, 0, 0),
@@ -67,6 +68,7 @@ INSERT INTO fish (name, season, weather, location, mine_level, num_caught, caugh
 ('Sea Cucumber', 'Fall/Winter', 'Any', 'Ocean', 0, 0, 0),
 ('Squid', 'Winter', 'Any', 'Ocean', 0, 0, 0),
 ('Octopus', 'Summer', 'Any', 'Ocean', 0, 0, 0),
+('Sea Jelly', 'Any', 'Any', 'Ocean', 0, 0, 0),
 
 -- River Fish (Town)
 ('Sunfish', 'Spring/Summer', 'Sunny', 'River (Town)', 0, 0, 0),
@@ -77,6 +79,7 @@ INSERT INTO fish (name, season, weather, location, mine_level, num_caught, caugh
 ('Salmon', 'Fall', 'Any', 'River (Town)', 0, 0, 0),
 ('Walleye', 'Fall/Winter', 'Rainy', 'River (Town/Forest)', 0, 0, 0),
 ('Tiger Trout', 'Fall/Winter', 'Any', 'River (Town)', 0, 0, 0),
+('River Jelly', 'Any', 'Any', 'River (Town)', 0, 0, 0),
 
 -- River Fish (Forest)
 ('Carp', 'Any', 'Any', 'River/Lake', 0, 0, 0),
@@ -88,6 +91,7 @@ INSERT INTO fish (name, season, weather, location, mine_level, num_caught, caugh
 ('Bullhead', 'Any', 'Any', 'Mountain Lake', 0, 0, 0),
 ('Sturgeon', 'Summer/Winter', 'Any', 'Mountain Lake', 0, 0, 0),
 ('Perch', 'Winter', 'Any', 'Mountain Lake', 0, 0, 0),
+('Midnight Carp', 'Fall/Winter', 'Any', 'Mountain Lake', 0, 0, 0),
 
 -- Desert
 ('Sandfish', 'Any', 'Any', 'Desert', 0, 0, 0),
@@ -98,10 +102,16 @@ INSERT INTO fish (name, season, weather, location, mine_level, num_caught, caugh
 ('Stonefish', 'Any', 'Any', 'Mines', 20, 0, 0),
 ('Ice Pip', 'Any', 'Any', 'Mines', 60, 0, 0),
 ('Lava Eel', 'Any', 'Any', 'Mines', 100, 0, 0),
+('Cave Jelly', 'Any', 'Any', 'Mines', 0, 0, 0),
 
 -- Other Locations
 ('Woodskip', 'Any', 'Any', 'Secret Woods', 0, 0, 0),
 ('Mutant Carp', 'Any', 'Any', 'Sewers', 0, 0, 0),
+('Slimejack', 'Any', 'Any', 'Bug Lair', 0, 0, 0),
+
+-- Ginger Island
+('Stingray', 'Any', 'Any', 'Ginger Island', 0, 0, 0),
+('Goby', 'Any', 'Any', 'Ginger Island', 0, 0, 0),
 
 -- Legendary Fish
 ('Legend', 'Spring', 'Rainy', 'Mountain Lake', 0, 0, 0),
@@ -124,7 +134,12 @@ INSERT INTO fish (name, season, weather, location, mine_level, num_caught, caugh
 ('Periwinkle', 'Any', 'Any', 'Crab Pot (Freshwater)', 0, 0, 0),
 ('Oyster', 'Any', 'Any', 'Crab Pot (Ocean)', 0, 0, 0),
 ('Clam', 'Any', 'Any', 'Crab Pot (Ocean)', 0, 0, 0),
-('Snail', 'Any', 'Any', 'Crab Pot (Freshwater)', 0, 0, 0);
+('Snail', 'Any', 'Any', 'Crab Pot (Freshwater)', 0, 0, 0),
+
+-- Algae and Seaweed (Collections screen items)
+('Seaweed', 'Any', 'Any', 'Ocean/Crab Pot', 0, 0, 0),
+('Green Algae', 'Any', 'Any', 'Freshwater/Crab Pot', 0, 0, 0),
+('White Algae', 'Any', 'Any', 'Freshwater/Crab Pot', 0, 0, 0);
 
 -- Create triggers to automatically set caught = 1 when num_caught > 0
 CREATE TRIGGER auto_set_caught_update
@@ -271,6 +286,10 @@ sqlite3 $DB "SELECT name, mine_level, caught FROM fish WHERE mine_level > 0 ORDE
 ## Contributing
 
 Found a missing fish or incorrect data? Please open an issue or submit a pull request!
+
+## License
+
+This project is open source. Feel free to modify and distribute!
 
 ## License
 
