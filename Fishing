@@ -1,0 +1,277 @@
+# Stardew Valley Fishing Progress Tracker
+
+A SQLite database tool to track your fishing completion progress in Stardew Valley. Perfect for completionists who want to know exactly which fish they still need to catch!
+
+## Features
+
+- ✅ **Complete fish database** - All 57+ catchable fish and crab pot items
+- 🎯 **Progress tracking** - See your completion percentage at a glance
+- 🔄 **Auto-updating** - `caught` status automatically updates when you log catches
+- ⚡ **Fast data entry** - Interactive command-line tool for quick updates
+- 📊 **Useful queries** - Find missing fish by season, location, etc.
+
+## Quick Start
+
+### 1. Create the Database
+
+First, download and install [DB Browser for SQLite](https://sqlitebrowser.org).
+
+1. Open DB Browser for SQLite
+2. Create New Database → save as `stardew_fish.db`
+3. Go to **Execute SQL** tab
+4. Copy and paste the entire schema below
+5. Click **Execute SQL**
+6. **Important**: Save changes with Ctrl+S or File → Write Changes
+
+### 2. Database Schema
+
+```sql
+-- Stardew Valley Fishing Database - Complete Schema
+-- Copy this entire block into DB Browser for SQLite
+
+-- Drop everything first to ensure clean slate
+DROP TRIGGER IF EXISTS auto_set_caught_update;
+DROP TRIGGER IF EXISTS auto_set_caught_insert;
+DROP VIEW IF EXISTS progress;
+DROP VIEW IF EXISTS uncaught_by_season;
+DROP TABLE IF EXISTS fish;
+
+-- Create the fish table
+CREATE TABLE fish (
+    name TEXT PRIMARY KEY,
+    caught BOOLEAN DEFAULT 0,
+    season TEXT NOT NULL,
+    weather TEXT NOT NULL,
+    location TEXT NOT NULL,
+    mine_level INTEGER DEFAULT 0,
+    num_caught INTEGER DEFAULT 0,
+    max_catch INTEGER
+);
+
+-- Insert all fish data (regular fish + crab pot items)
+INSERT INTO fish (name, season, weather, location, mine_level, num_caught, caught) VALUES
+-- Ocean Fish
+('Anchovy', 'Spring/Fall', 'Any', 'Ocean', 0, 0, 0),
+('Sardine', 'Spring/Fall/Winter', 'Any', 'Ocean', 0, 0, 0),
+('Flounder', 'Spring/Summer', 'Any', 'Ocean', 0, 0, 0),
+('Halibut', 'Spring/Summer/Winter', 'Any', 'Ocean', 0, 0, 0),
+('Herring', 'Spring/Winter', 'Any', 'Ocean', 0, 0, 0),
+('Red Mullet', 'Summer/Winter', 'Any', 'Ocean', 0, 0, 0),
+('Red Snapper', 'Summer/Fall', 'Rainy', 'Ocean', 0, 0, 0),
+('Tuna', 'Summer/Winter', 'Any', 'Ocean', 0, 0, 0),
+('Tilapia', 'Summer/Fall', 'Any', 'Ocean', 0, 0, 0),
+('Pufferfish', 'Summer', 'Sunny', 'Ocean', 0, 0, 0),
+('Super Cucumber', 'Summer/Fall', 'Any', 'Ocean', 0, 0, 0),
+('Albacore', 'Fall/Winter', 'Any', 'Ocean', 0, 0, 0),
+('Eel', 'Spring/Fall', 'Rainy', 'Ocean', 0, 0, 0),
+('Sea Cucumber', 'Fall/Winter', 'Any', 'Ocean', 0, 0, 0),
+('Squid', 'Winter', 'Any', 'Ocean', 0, 0, 0),
+('Octopus', 'Summer', 'Any', 'Ocean', 0, 0, 0),
+
+-- River Fish (Town)
+('Sunfish', 'Spring/Summer', 'Sunny', 'River (Town)', 0, 0, 0),
+('Catfish', 'Spring/Fall', 'Rainy', 'River (Town)', 0, 0, 0),
+('Shad', 'Spring/Summer/Fall', 'Rainy', 'River (Town)', 0, 0, 0),
+('Pike', 'Summer/Winter', 'Any', 'River (Town)', 0, 0, 0),
+('Bream', 'Any', 'Any', 'River (Town)', 0, 0, 0),
+('Salmon', 'Fall', 'Any', 'River (Town)', 0, 0, 0),
+('Walleye', 'Fall/Winter', 'Rainy', 'River (Town/Forest)', 0, 0, 0),
+('Tiger Trout', 'Fall/Winter', 'Any', 'River (Town)', 0, 0, 0),
+
+-- River Fish (Forest)
+('Carp', 'Any', 'Any', 'River/Lake', 0, 0, 0),
+('Smallmouth Bass', 'Spring/Fall', 'Any', 'River (Forest)', 0, 0, 0),
+('Rainbow Trout', 'Summer', 'Sunny', 'River (Forest)', 0, 0, 0),
+
+-- Mountain Lake
+('Largemouth Bass', 'Any', 'Any', 'Mountain Lake', 0, 0, 0),
+('Bullhead', 'Any', 'Any', 'Mountain Lake', 0, 0, 0),
+('Sturgeon', 'Summer/Winter', 'Any', 'Mountain Lake', 0, 0, 0),
+('Perch', 'Winter', 'Any', 'Mountain Lake', 0, 0, 0),
+
+-- Desert
+('Sandfish', 'Any', 'Any', 'Desert', 0, 0, 0),
+('Scorpion Carp', 'Any', 'Any', 'Desert', 0, 0, 0),
+
+-- Mines (mine_level shows which floor they appear)
+('Ghostfish', 'Any', 'Any', 'Mines', 20, 0, 0),
+('Stonefish', 'Any', 'Any', 'Mines', 20, 0, 0),
+('Ice Pip', 'Any', 'Any', 'Mines', 60, 0, 0),
+('Lava Eel', 'Any', 'Any', 'Mines', 100, 0, 0),
+
+-- Other Locations
+('Woodskip', 'Any', 'Any', 'Secret Woods', 0, 0, 0),
+('Mutant Carp', 'Any', 'Any', 'Sewers', 0, 0, 0),
+
+-- Legendary Fish
+('Legend', 'Spring', 'Rainy', 'Mountain Lake', 0, 0, 0),
+('Angler', 'Fall', 'Any', 'River (Town)', 0, 0, 0),
+('Crimsonfish', 'Summer', 'Any', 'Ocean (East Pier)', 0, 0, 0),
+('Glacierfish', 'Winter', 'Any', 'River (Forest)', 0, 0, 0),
+
+-- Night Market (Winter only)
+('Spook Fish', 'Winter', 'Any', 'Submarine', 0, 0, 0),
+('Blobfish', 'Winter', 'Any', 'Submarine', 0, 0, 0),
+('Midnight Squid', 'Winter', 'Any', 'Submarine', 0, 0, 0),
+
+-- Crab Pot Items
+('Cockle', 'Any', 'Any', 'Crab Pot (Ocean)', 0, 0, 0),
+('Mussel', 'Any', 'Any', 'Crab Pot (Ocean)', 0, 0, 0),
+('Shrimp', 'Any', 'Any', 'Crab Pot (Ocean)', 0, 0, 0),
+('Crab', 'Any', 'Any', 'Crab Pot (Ocean)', 0, 0, 0),
+('Lobster', 'Any', 'Any', 'Crab Pot (Ocean)', 0, 0, 0),
+('Crayfish', 'Any', 'Any', 'Crab Pot (Freshwater)', 0, 0, 0),
+('Periwinkle', 'Any', 'Any', 'Crab Pot (Freshwater)', 0, 0, 0),
+('Oyster', 'Any', 'Any', 'Crab Pot (Ocean)', 0, 0, 0),
+('Clam', 'Any', 'Any', 'Crab Pot (Ocean)', 0, 0, 0),
+('Snail', 'Any', 'Any', 'Crab Pot (Freshwater)', 0, 0, 0);
+
+-- Create triggers to automatically set caught = 1 when num_caught > 0
+CREATE TRIGGER auto_set_caught_update
+AFTER UPDATE OF num_caught ON fish
+FOR EACH ROW
+WHEN NEW.num_caught > 0 AND NEW.caught = 0
+BEGIN
+    UPDATE fish SET caught = 1 WHERE name = NEW.name;
+END;
+
+CREATE TRIGGER auto_set_caught_insert
+AFTER INSERT ON fish
+FOR EACH ROW
+WHEN NEW.num_caught > 0 AND NEW.caught = 0
+BEGIN
+    UPDATE fish SET caught = 1 WHERE name = NEW.name;
+END;
+
+-- Create helpful views for tracking progress
+CREATE VIEW progress AS
+SELECT 
+    COUNT(*) as total_fish,
+    SUM(caught) as caught_fish,
+    ROUND((SUM(caught) * 100.0) / COUNT(*), 1) as completion_percent
+FROM fish;
+
+CREATE VIEW uncaught_by_season AS
+SELECT season, COUNT(*) as uncaught_count
+FROM fish 
+WHERE caught = 0
+GROUP BY season 
+ORDER BY uncaught_count DESC;
+```
+
+## Usage
+
+### Command Line Interface
+
+For fast data entry, use these bash functions. First set your database path:
+
+```bash
+DB="stardew_fish.db"
+```
+
+#### Single Fish Update Function
+
+```bash
+quick_fish() {
+    echo -n "Fish: "
+    read fish_name
+    echo -n "Caught: "
+    read num_caught
+    echo -n "Max: "
+    read max_catch
+    
+    if [[ -z "$max_catch" ]]; then
+        sqlite3 $DB "UPDATE fish SET num_caught = $num_caught WHERE name = '$fish_name';"
+    else
+        sqlite3 $DB "UPDATE fish SET num_caught = $num_caught, max_catch = $max_catch WHERE name = '$fish_name';"
+    fi
+    
+    sqlite3 $DB "SELECT name, caught, num_caught, max_catch FROM fish WHERE name = '$fish_name';"
+}
+```
+
+Usage: `quick_fish`
+
+#### Batch Update Loop
+
+```bash
+while true; do
+    quick_fish
+    echo -n "Another fish? (Enter to continue, 'q' to quit): "
+    read continue_choice
+    if [ "$continue_choice" = "q" ]; then
+        break
+    fi
+    echo "---"
+done
+```
+
+### Useful Queries
+
+#### Check Your Progress
+```bash
+sqlite3 $DB "SELECT * FROM progress;"
+```
+
+#### Find Uncaught Fish
+```bash
+sqlite3 $DB "SELECT name, location, season, weather FROM fish WHERE caught = 0 ORDER BY location, name;"
+```
+
+#### Fish by Season
+```bash
+sqlite3 $DB "SELECT name, location, weather FROM fish WHERE caught = 0 AND (season LIKE '%Spring%' OR season = 'Any') ORDER BY location;"
+```
+
+#### Legendary Fish Progress
+```bash
+sqlite3 $DB "SELECT name, caught, num_caught FROM fish WHERE location LIKE '%Mountain Lake%' OR location LIKE '%Ocean (East Pier)%' OR location LIKE '%Sewers%' OR name IN ('Angler', 'Glacierfish');"
+```
+
+#### Mine Fish by Floor
+```bash
+sqlite3 $DB "SELECT name, mine_level, caught FROM fish WHERE mine_level > 0 ORDER BY mine_level;"
+```
+
+## Database Schema
+
+### Fish Table Columns
+
+| Column | Type | Description |
+|--------|------|-------------|
+| `name` | TEXT | Fish name (Primary Key) |
+| `caught` | BOOLEAN | Whether you've caught this fish (auto-updates) |
+| `season` | TEXT | When the fish is available |
+| `weather` | TEXT | Required weather conditions |
+| `location` | TEXT | Where to catch the fish |
+| `mine_level` | INTEGER | Mine floor (0 for non-mine fish) |
+| `num_caught` | INTEGER | How many you've caught |
+| `max_catch` | INTEGER | Target number (optional) |
+
+### Automatic Features
+
+- **Auto-completion**: When you set `num_caught > 0`, `caught` automatically becomes `TRUE`
+- **Progress tracking**: The `progress` view automatically calculates completion percentage
+- **Season filtering**: Easy to find what you can catch right now
+
+## Tips
+
+1. **Start with current season**: Focus on fish available in your current Stardew season
+2. **Use max_catch for goals**: Set targets for fish you need for bundles or cooking
+3. **Check mine_level**: For mine fish, this shows which floor they appear on
+4. **Legendary fish**: Can only be caught once each (set max_catch = 1)
+5. **Crab pots**: Don't forget about crab pot items for 100% completion!
+
+## Requirements
+
+- SQLite3 (usually pre-installed on Mac/Linux, available for Windows)
+- [DB Browser for SQLite](https://sqlitebrowser.org) (recommended for GUI)
+- Terminal/Command Prompt for fast data entry
+
+## Contributing
+
+Found a missing fish or incorrect data? Please open an issue or submit a pull request!
+
+## License
+
+This project is open source. Feel free to modify and distribute!
